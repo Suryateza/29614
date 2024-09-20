@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cartoon Star Collector</title>
+<style>
+    body { font-family: 'Arial', sans-serif; background: #f0f8ff; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    #gameArea { border: 4px solid #4a4a4a; background: #87ceeb; overflow: hidden; position: relative; }
+    #instructions, #scoreBoard { text-align: center; margin: 10px; }
+    #score, #lives, #timer { font-weight: bold; color: #ff6347; }
+</style>
+</head>
+<body>
+<div id="instructions">
+    <h2>Collect the Stars!</h2>
+    <p>Use arrow keys or swipe to move. Avoid obstacles, collect stars, and find power-ups!</p>
+</div>
+<div id="gameArea"></div>
+<div id="scoreBoard">
+    <span>Score: <span id="score">0</span></span> | 
+    <span>Lives: <span id="lives">3</span></span> | 
+    <span>Time: <span id="timer">0</span></span>
+</div>
+
+<script>
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 500;
+    canvas.height = 300;
+    document.getElementById('gameArea').appendChild(canvas);
+
+    // Game objects
+    let player = {x: 50, y: 150, width: 30, height: 30, dy: 0, jumpPower: -5, speed: 2};
+    let stars = [], obstacles = [], powerUps = [];
+    let score = 0, lives = 3, time = 0, gameRunning = false;
+
+    // Draw functions
+    function drawPlayer() {
+        ctx.fillStyle = '#ff4500';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function updateGame() {
+        if (!gameRunning) return;
+
+        // Update positions
+        player.y += player.dy;
+        if (player.y + player.height > canvas.height) {
+            player.y = canvas.height - player.height;
+            player.dy = 0;
+        } else {
+            player.dy += 0.2; // Gravity
+        }
+
+        // Check collisions, update score, etc.
+        // ...
+
+        // Draw everything
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawPlayer();
+        // Draw stars, obstacles, power-ups...
+
+        // Update UI
+        document.getElementById('score').textContent = score;
+        document.getElementById('lives').textContent = lives;
+        document.getElementById('timer').textContent = time++;
+
+        requestAnimationFrame(updateGame);
+    }
+
+    // Event listeners for controls
+    document.addEventListener('keydown', function(e) {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            if (player.y + player.height === canvas.height) player.dy = player.jumpPower;
+        }
+    });
+
+    // Mobile touch controls
+    canvas.addEventListener('touchstart', function(e) {
+        if (player.y + player.height === canvas.height) player.dy = player.jumpPower;
+    });
+
+    // Start game function
+    function startGame() {
+        gameRunning = true;
+        updateGame();
+    }
+
+    // Initialize game
+    startGame();
+</script>
+</body>
+</html>
