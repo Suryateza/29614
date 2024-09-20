@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartoon Game Widget</title>
+    <style>
+        body {
+            background-color: #87CEEB;
+            font-family: 'Comic Sans MS', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: #FFF;
+            border: 2px solid #000;
+        }
+        
+        canvas {
+            background-color: #ADD8E6; /* Light blue background as a fallback */
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #FFF;
+            font-size: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <button id="jumpBtn">Jump</button>
+            <button id="slideBtn">Slide</button>
+        </div>
+        <div class="info-panel">
+            <div id="lives">Lives: 3</div>
+            <div id="timer">Time: 60</div>
+            <div id="score">Score: 0</div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        let lives = 3;
+        let score = 0;
+        let timer = 60;
+        let gameInterval;
+        let character = {
+            x: 50,
+            y: 550,
+            width: 50,
+            height: 50,
+            isJumping: false,
+            isSliding: false,
+        };
+        let obstacles = [];
+        let stars = [];
+        
+        document.getElementById('lives').textContent = `Lives: ${lives}`;
+        document.getElementById('score').textContent = `Score: ${score}`;
+        document.getElementById('timer').textContent = `Time: ${timer}`;
+        
+        // Timer countdown
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = `Time: ${timer}`;
+                if (timer <= 0 || lives <= 0) {
+                    clearInterval(timerInterval);
+                    clearInterval(gameInterval);
+                    alert(`Game Over! Your score: ${score}`);
+                }
+            }, 1000);
+        }
+        
+        // Drawing the character
+        function drawCharacter() {
+            ctx.fillStyle = '#FFD700'; // Quirky yellow character
+            ctx.fillRect(character.x, character.y, character.width, character.height);
+        }
+        
+        // Handle jump action
+        function jump(isButtonClick = false) {
+            if (!character.isJumping && !character.isSliding) {
+                character.isJumping = true;
+                let jumpHeight = isButtonClick ? 300 : 150; // Higher jump when button is clicked
+                let jumpProgress = 0;
+                const jumpInterval = setInterval(() => {
+                    if (jumpProgress < jumpHeight) {
+                        character.y -= 5;
+                        jumpProgress += 5;
+                    } else {
+                        clearInterval(jumpInterval);
+                        const fallInterval = setInterval(() => {
+                            if (jumpProgress > 0) {
+                                character.y += 5;
+                                jumpProgress -= 5;
+                            } else {
+                                character.isJumping = false;
+                                clearInterval(fallInterval);
+                            }
+                        }, 20);
+                    }
+                }, 20);
+            }
+        }
+        
+        // Handle slide action
+        function slide() {
+            if (!character.isJumping && !character.isSliding) {
+                character.isSliding = true;
+                character.height = 25;
+                setTimeout(() => {
+                    character.height = 50;
+                    character.isSliding = false;
+                }, 1000);
+            }
+        }
+        
+        // Event listeners for button clicks
+        document.getElementById("jumpBtn").addEventListener("click", () => jump(true));
+        document.getElementById("slideBtn").addEventListener("click", slide);
+        
+        // Event listeners for keyboard controls
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp") {
+                jump(); // Default jump height
+            } else if (e.key === "ArrowDown") {
+                slide();
+            }
+        });
+
+        // Prevent default behavior for arrow keys (scrolling)
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault();
+            }
+        });
+        
+        // Drawing obstacles and stars
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = '#FF0000';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                obstacle.x -= obstacle.speed;
+
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacle.x = canvas.width + Math.random() * 500;
+                }
+
+                // Check collision
+                if (character.x < obstacle.x + obstacle.width &&
+                    character.x + character.width > obstacle.x &&
+                    character.y < obstacle.y + obstacle.height &&
+                    character.y + character.height > obstacle.y) {
+                    lives--;
+                    document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    obstacle.x = canvas.width + Math.random() * 500;
+                }
+            });
+        }
+        
+        function drawStars() {
+            stars.forEach(star => {
+                ctx.fillStyle = '#FFFF00';
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+                star.x -= star.speed;
+
+                if (star.x + star.size < 0) {
+                    star.x = canvas.width + Math.random() * 500;
+                }
+
+                // Collect star
+                if (character.x < star.x + star.size &&
+                    character.x + character.width > star.x &&
+                    character.y < star.y + star.size &&
+                    character.y + character.height > star.y) {
+                    score += 10;
+                    document.getElementById('score').textContent = `Score: ${score}`;
+                    star.x = canvas.width + Math.random() * 500;
+                }
+            });
+        }
+        
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCharacter();
+            drawObstacles();
+            drawStars();
+        }
+        
+        function initGame() {
+            for (let i = 0; i < 3; i++) {
+                obstacles.push({
+                    x: canvas.width + Math.random() * 500,
+                    y: 550,
+                    width: 50,
+                    height: 50,
+                    speed: 5
+                });
+            }
+
+            for (let i = 0; i < 5; i++) {
+                stars.push({
+                    x: canvas.width + Math.random() * 500,
+                    y: Math.random() * 500,
+                    size: 25,
+                    speed: 3
+                });
+            }
+
+            gameInterval = setInterval(gameLoop, 1000 / 60);
+            startTimer();
+        }
+        
+        initGame();
+    </script>
+</body>
+</html>
