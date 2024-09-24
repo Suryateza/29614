@@ -131,7 +131,7 @@
             <button id="startBtn">Start Game</button>
         </div>
         <div class="end-screen" id="endScreen" style="display: none;">
-            <h1>Congratulations! You Won the Game!</h1>
+            <h1>Game Over!</h1>
             <p id="finalScore">Your Score: 0</p>
             <button id="submitScoreBtn">Submit Score</button>
             <button id="newGameBtn">New Game</button>
@@ -155,7 +155,7 @@
         let powerUpActive = false;
         let powerUpType = null;
         let powerUpTimeLeft = 0;
-        let gameWon = false;
+        let gameOver = false;
 
         let character = {
             x: 50,
@@ -193,15 +193,14 @@
             const timerInterval = setInterval(() => {
                 timer--;
                 document.getElementById('timer').textContent = `Time: ${timer}`;
-                if (timer <= 0 || lives <= 0 || gameWon) {
+                if (timer <= 0 || gameOver) {
                     clearInterval(timerInterval);
                     clearInterval(gameInterval);
-                    if (gameWon) {
-                        showWinScreen();
+                    if (gameOver) {
+                        showGameOver();
                     } else {
-                        alert(`Game Over! Your score: ${score}`);
-                        endScreen.style.display = "flex"; // Show end screen on game over
-                        finalScore.textContent = `Your Score: ${score}`;
+                        alert(`Time's up! Your score: ${score}`);
+                        showGameOver();
                     }
                 }
             }, 1000);
@@ -371,6 +370,7 @@
                 li.textContent = `#${index + 1} - ${entry.name}: ${entry.score}`;
                 leaderboardList.appendChild(li);
             });
+            leaderboard.style.display = leaderboardScores.length > 0 ? "block" : "none";
         }
 
         // New game button event listener
@@ -398,6 +398,7 @@
             endScreen.style.display = "flex"; // Show end screen on game over
             finalScore.textContent = `Your Score: ${score}`;
             clearInterval(gameInterval);
+            gameOver = true;
         }
 
         // Initialize game
@@ -408,7 +409,7 @@
             lives = 3;
             score = 0;
             timer = 60;
-            gameWon = false;
+            gameOver = false;
             document.getElementById('lives').textContent = `Lives: ${lives}`;
             document.getElementById('score').textContent = `Score: ${score}`;
             document.getElementById('timer').textContent = `Time: ${timer}`;
