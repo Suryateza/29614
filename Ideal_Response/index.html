@@ -117,7 +117,12 @@
             height: 50,
             isJumping: false,
             isSliding: false,
+            velocityY: 0,
+            maxJumpHeight: 300,
+            gravity: 1,
         };
+
+        let isJumping = false;
 
         let obstacles = [];
         let gems = [];
@@ -149,29 +154,21 @@
             ctx.fillRect(character.x, character.y, character.width, character.height);
         }
 
-        // Handle jump action
-        function jump(isButtonClick = false) {
-            if (!character.isJumping && !character.isSliding) {
-                character.isJumping = true;
-                let jumpHeight = isButtonClick ? 300 : 150;
-                let jumpProgress = 0;
-                const jumpInterval = setInterval(() => {
-                    if (jumpProgress < jumpHeight) {
-                        character.y -= 5;
-                        jumpProgress += 5;
-                    } else {
-                        clearInterval(jumpInterval);
-                        const fallInterval = setInterval(() => {
-                            if (jumpProgress > 0) {
-                                character.y += 5;
-                                jumpProgress -= 5;
-                            } else {
-                                character.isJumping = false;
-                                clearInterval(fallInterval);
-                            }
-                        }, 20);
-                    }
-                }, 20);
+        // Jump functionality with button press hold
+        function jump() {
+            if (isJumping) {
+                if (character.y > canvas.height - character.maxJumpHeight) {
+                    character.velocityY = -10;
+                }
+            } else {
+                character.velocityY += character.gravity;
+            }
+
+            character.y += character.velocityY;
+
+            if (character.y >= 550) {
+                character.y = 550;
+                character.velocityY = 0;
             }
         }
 
@@ -188,21 +185,24 @@
         }
 
         // Event listeners for button clicks
-        document.getElementById("jumpBtn").addEventListener("click", () => jump(true));
-        document.getElementById("slideBtn").addEventListener("click", slide);
+        document.getElementById("jumpBtn").addEventListener("mousedown", () => {
+            isJumping = true;
+        });
 
-        // Event listeners for keyboard controls
+        document.getElementById("jumpBtn").addEventListener("mouseup", () => {
+            isJumping = false;
+        });
+
+        // Keyboard controls for jump (when holding the up arrow key)
         document.addEventListener("keydown", (e) => {
             if (e.key === "ArrowUp") {
-                jump();
-            } else if (e.key === "ArrowDown") {
-                slide();
+                isJumping = true;
             }
         });
 
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                e.preventDefault();
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowUp") {
+                isJumping = false;
             }
         });
 
@@ -301,6 +301,7 @@
             drawObstacles();
             drawGems();
             drawPowerUps();
+            jump();
         }
 
         function initGame() {
