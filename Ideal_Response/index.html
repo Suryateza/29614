@@ -164,13 +164,11 @@
             width: 50,
             height: 50,
             isJumping: false,
-            isSliding: false,
-            velocityY: 0,
-            maxJumpHeight: 300,
+            jumpHeight: 100,
             gravity: 1,
+            velocityY: 0,
+            grounded: true,
         };
-
-        let isJumping = false;
 
         let obstacles = [];
         let gems = [];
@@ -185,9 +183,12 @@
         const leaderboard = document.getElementById("leaderboard");
         const leaderboardList = document.getElementById("leaderboardList");
 
-        document.getElementById('lives').textContent = `Lives: ${lives}`;
-        document.getElementById('score').textContent = `Score: ${score}`;
-        document.getElementById('timer').textContent = `Time: ${timer}`;
+        // Update UI
+        function updateUI() {
+            document.getElementById('lives').textContent = `Lives: ${lives}`;
+            document.getElementById('score').textContent = `Score: ${score}`;
+            document.getElementById('timer').textContent = `Time: ${timer}`;
+        }
 
         // Timer countdown
         function startTimer() {
@@ -212,35 +213,37 @@
         }
 
         function jump() {
-            if (isJumping) {
-                character.velocityY -= 1; // Jumping force
+            if (character.isJumping) {
+                character.velocityY -= 2; // Jumping force
                 character.y -= character.velocityY;
-                if (character.y <= character.maxJumpHeight) {
+                if (character.velocityY <= 0) {
                     character.isJumping = false; // Stop jumping at max height
                 }
-            } else if (character.y < 550) {
-                character.velocityY += character.gravity; // Gravity effect
-                character.y += character.velocityY;
+            } else {
+                if (!character.grounded) {
+                    character.velocityY += character.gravity; // Gravity effect
+                    character.y += character.velocityY;
+                }
                 if (character.y >= 550) {
                     character.y = 550; // Reset character to ground
                     character.velocityY = 0;
+                    character.grounded = true; // Set grounded to true when on ground
                 }
             }
         }
 
         document.getElementById("jumpBtn").addEventListener("click", () => {
-            if (character.y === 550) {
+            if (character.grounded) {
                 character.isJumping = true;
-                isJumping = true;
+                character.grounded = false; // Set grounded to false when jumping
+                character.velocityY = 20; // Initial jump velocity
             }
         });
 
         document.getElementById("slideBtn").addEventListener("click", () => {
-            if (character.y === 550) {
-                character.isSliding = true;
+            if (character.grounded) {
                 character.height = 25; // Slide height
                 setTimeout(() => {
-                    character.isSliding = false;
                     character.height = 50; // Reset height
                 }, 1000); // Slide duration
             }
@@ -253,7 +256,7 @@
                 obstacle.x -= obstacle.speed;
 
                 if (obstacle.x + obstacle.width < 0) {
-                    obstacle.x = canvas.width + Math.random() * 500;
+                    obstacle.x = canvas.width + Math.random() * 500; // Reset obstacle position
                 }
 
                 // Check for collision with the character
@@ -262,9 +265,9 @@
                     character.y < obstacle.y + obstacle.height &&
                     character.y + character.height > obstacle.y) {
                     lives--;
-                    document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    score -= 10;
                     if (lives <= 0) {
-                        endGame();
+                        gameOver = true;
                     }
                 }
             });
@@ -272,189 +275,156 @@
 
         function drawGems() {
             gems.forEach(gem => {
-                ctx.fillStyle = '#FFFF00';
-                ctx.fillRect(gem.x, gem.y, gem.size, gem.size);
+                ctx.fillStyle = '#FFD700'; // Gem color
+                ctx.fillRect(gem.x, gem.y, gem.width, gem.height);
                 gem.x -= gem.speed;
 
-                if (gem.x + gem.size < 0) {
-                    gem.x = canvas.width + Math.random() * 500;
+                if (gem.x + gem.width < 0) {
+                    gem.x = canvas.width + Math.random() * 500; // Reset gem position
                 }
 
-                if (character.x < gem.x + gem.size &&
+                // Check for collection of gems
+                if (character.x < gem.x + gem.width &&
                     character.x + character.width > gem.x &&
-                    character.y < gem.y + gem.size &&
+                    character.y < gem.y + gem.height &&
                     character.y + character.height > gem.y) {
                     score += 10;
-                    document.getElementById('score').textContent = `Score: ${score}`;
-                    gem.x = canvas.width + Math.random() * 500;
-
-                    // Check for win condition
-                    if (score >= 100) {
-                        gameWon = true;
-                        showWinScreen();
-                    }
+                    gems.splice(gems.indexOf(gem), 1); // Remove collected gem
                 }
             });
         }
 
         function drawPowerUps() {
             powerUps.forEach(powerUp => {
-                ctx.fillStyle = '#0000FF';
-                ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
+                ctx.fillStyle = '#00FF00'; // Power-up color
+                ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
                 powerUp.x -= powerUp.speed;
 
-                if (powerUp.x + powerUp.size < 0) {
-                    powerUp.x = canvas.width + Math.random() * 500;
+                if (powerUp.x + powerUp.width < 0) {
+                    powerUp.x = canvas.width + Math.random() * 500; // Reset power-up position
                 }
 
-                if (character.x < powerUp.x + powerUp.size &&
+                // Check for collection of power-ups
+                if (character.x < powerUp.x + powerUp.width &&
                     character.x + character.width > powerUp.x &&
-                    character.y < powerUp.y + powerUp.size &&
+                    character.y < powerUp.y + powerUp.height &&
                     character.y + character.height > powerUp.y) {
                     powerUpActive = true;
                     powerUpType = powerUp.type;
-                    powerUpTimeLeft = 10;
-                    document.getElementById('powerup').textContent = `Power-Up: ${powerUpType}`;
-                    powerUp.x = canvas.width + Math.random() * 500;
-
-                    if (powerUpType === 'extraLife') {
-                        lives++;
-                        document.getElementById('lives').textContent = `Lives: ${lives}`;
-                    }
-
-                    const powerUpInterval = setInterval(() => {
-                        powerUpTimeLeft--;
-                        if (powerUpTimeLeft <= 0) {
-                            powerUpActive = false;
-                            document.getElementById('powerup').textContent = `Power-Up: None`;
-                            clearInterval(powerUpInterval);
-                        }
-                    }, 1000);
+                    powerUpTimeLeft = 10; // Active for 10 seconds
+                    powerUps.splice(powerUps.indexOf(powerUp), 1); // Remove collected power-up
                 }
             });
         }
 
-        // Show win screen with final score
-        function showWinScreen() {
-            endScreen.style.display = "flex";
-            finalScore.textContent = `Your Score: ${score}`;
-            leaderboard.style.display = "block";
-            updateLeaderboard();
-        }
-
-        // Show game over screen with final score
-        function showGameOver() {
-            endScreen.style.display = "flex";
-            finalScore.textContent = `Your Score: ${score}`;
-            leaderboard.style.display = "block";
-            updateLeaderboard();
-        }
-
-        // Update leaderboard display
-        function updateLeaderboard() {
-            const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboardList.innerHTML = '';
-            leaderboardScores.slice(0, 5).forEach((entry, index) => {
-                const li = document.createElement('li');
-                li.textContent = `#${index + 1} - ${entry.name}: ${entry.score}`;
-                leaderboardList.appendChild(li);
-            });
-            leaderboard.style.display = leaderboardScores.length > 0 ? "block" : "none";
-        }
-
-        // New game button event listener
-        newGameBtn.addEventListener("click", () => {
-            endScreen.style.display = "none";
-            initGame();
-        });
-
-        // Submit score event listener
-        submitScoreBtn.addEventListener("click", () => {
-            const name = prompt("Enter your name for the leaderboard:");
-            if (name) {
-                const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-                leaderboardScores.push({ name, score });
-                leaderboardScores.sort((a, b) => b.score - a.score); // Sort scores in descending order
-                localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
-                updateLeaderboard();
-                alert("Score submitted!");
+        function updatePowerUp() {
+            if (powerUpActive) {
+                powerUpTimeLeft -= 1 / 60; // Decrement time left (assuming 60 FPS)
+                if (powerUpTimeLeft <= 0) {
+                    powerUpActive = false;
+                    powerUpType = null;
+                }
             }
-        });
-
-        // End game function
-        function endGame() {
-            alert("Game Over! Your score: " + score);
-            showGameOver(); // Call the showGameOver function here
-            clearInterval(gameInterval);
-            gameOver = true;
         }
 
-        // Initialize game
-        function initGame() {
-            obstacles = [];
-            gems = [];
-            powerUps = [];
-            lives = 3;
-            score = 0;
-            timer = 60;
-            gameOver = false;
-            document.getElementById('lives').textContent = `Lives: ${lives}`;
-            document.getElementById('score').textContent = `Score: ${score}`;
-            document.getElementById('timer').textContent = `Time: ${timer}`;
-
-            // Create obstacles
-            for (let i = 0; i < 3; i++) {
-                obstacles.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: 550,
-                    width: 50,
-                    height: 50,
-                    speed: 5
-                });
-            }
-
-            // Create gems
-            for (let i = 0; i < 5; i++) {
-                gems.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: Math.random() * 500,
-                    size: 25,
-                    speed: 3
-                });
-            }
-
-            // Create power-ups
-            for (let i = 0; i < 2; i++) {
-                powerUps.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: Math.random() * 500,
-                    size: 30,
-                    speed: 2,
-                    type: Math.random() > 0.5 ? 'invincibility' : 'extraLife'
-                });
-            }
-
-            gameInterval = setInterval(gameLoop, 1000 / 60);
-            startTimer();
-        }
-
-        // Start button event listener
-        startBtn.addEventListener("click", () => {
-            startScreen.style.display = "none";
-            document.getElementById("jumpBtn").disabled = false;
-            document.getElementById("slideBtn").disabled = false;
-            initGame();
-        });
-
-        // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            jump();
             drawCharacter();
             drawObstacles();
             drawGems();
             drawPowerUps();
-            jump();
+            updatePowerUp();
+            updateUI();
+
+            if (!gameOver) {
+                requestAnimationFrame(gameLoop);
+            }
         }
+
+        function startGame() {
+            lives = 3;
+            score = 0;
+            timer = 60;
+            gameOver = false;
+            obstacles = [];
+            gems = [];
+            powerUps = [];
+            character.y = 550; // Reset character position
+            character.isJumping = false; // Reset jump state
+            character.grounded = true; // Reset grounded state
+
+            // Generate obstacles, gems, and power-ups off-screen to start
+            for (let i = 0; i < 5; i++) {
+                obstacles.push({
+                    x: canvas.width + Math.random() * 500, // Start off-screen
+                    y: 550,
+                    width: 50,
+                    height: 50,
+                    speed: Math.random() * 5 + 2 // Random speed for obstacles
+                });
+                gems.push({
+                    x: canvas.width + Math.random() * 500, // Start off-screen
+                    y: 500,
+                    width: 30,
+                    height: 30,
+                    speed: Math.random() * 5 + 1 // Random speed for gems
+                });
+                powerUps.push({
+                    x: canvas.width + Math.random() * 500, // Start off-screen
+                    y: 450,
+                    width: 40,
+                    height: 40,
+                    speed: Math.random() * 3 + 1, // Random speed for power-ups
+                    type: 'extraLife' // Modify this to have different power-up types
+                });
+            }
+
+            updateUI();
+            startTimer();
+            gameInterval = requestAnimationFrame(gameLoop);
+            document.getElementById("jumpBtn").disabled = false;
+            document.getElementById("slideBtn").disabled = false;
+            startScreen.style.display = "none"; // Hide start screen
+            endScreen.style.display = "none"; // Hide end screen if it was displayed
+        }
+
+        function endGame() {
+            gameOver = true;
+            document.getElementById("jumpBtn").disabled = true;
+            document.getElementById("slideBtn").disabled = true;
+            finalScore.textContent = `Your Score: ${score}`;
+            endScreen.style.display = "flex";
+        }
+
+        function showGameOver() {
+            endScreen.style.display = "flex";
+            leaderboard.style.display = "block"; // Show leaderboard on game over
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            leaderboardList.innerHTML = ''; // Clear previous leaderboard
+            // Sample leaderboard data (replace with actual leaderboard logic)
+            const sampleScores = [
+                { name: "Player1", score: 100 },
+                { name: "Player2", score: 90 },
+                { name: "Player3", score: 80 },
+            ];
+
+            sampleScores.forEach(player => {
+                const li = document.createElement("li");
+                li.textContent = `${player.name}: ${player.score}`;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        startBtn.addEventListener("click", startGame);
+        newGameBtn.addEventListener("click", startGame);
+        submitScoreBtn.addEventListener("click", () => {
+            // Submit score logic here
+            alert("Score submitted!");
+        });
     </script>
 </body>
 </html>
