@@ -200,6 +200,8 @@
                         showWinScreen();
                     } else {
                         alert(`Game Over! Your score: ${score}`);
+                        endScreen.style.display = "flex"; // Show end screen on game over
+                        finalScore.textContent = `Your Score: ${score}`;
                     }
                 }
             }, 1000);
@@ -274,6 +276,7 @@
                     obstacle.x = canvas.width + Math.random() * 500;
                 }
 
+                // Check for collision with character
                 if (character.x < obstacle.x + obstacle.width &&
                     character.x + character.width > obstacle.x &&
                     character.y < obstacle.y + obstacle.height &&
@@ -281,8 +284,7 @@
                     lives--;
                     document.getElementById('lives').textContent = `Lives: ${lives}`;
                     if (lives <= 0) {
-                        alert('Game Over! Your score: ' + score);
-                        clearInterval(gameInterval);
+                        endGame();
                     }
                 }
             });
@@ -363,10 +365,6 @@
         // Update leaderboard display
         function updateLeaderboard() {
             const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboardScores.push({ name: 'Player', score }); // Temporary placeholder for player name
-            leaderboardScores.sort((a, b) => b.score - a.score); // Sort scores in descending order
-            localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
-
             leaderboardList.innerHTML = '';
             leaderboardScores.slice(0, 5).forEach((entry, index) => {
                 const li = document.createElement('li');
@@ -393,6 +391,14 @@
                 alert("Score submitted!");
             }
         });
+
+        // End game function
+        function endGame() {
+            alert("Game Over! Your score: " + score);
+            endScreen.style.display = "flex"; // Show end screen on game over
+            finalScore.textContent = `Your Score: ${score}`;
+            clearInterval(gameInterval);
+        }
 
         // Initialize game
         function initGame() {
