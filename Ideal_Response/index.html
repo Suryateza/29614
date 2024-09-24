@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartoon Game Widget</title>
+    <title>Cartoon Game with Leaderboard</title>
     <style>
         body {
             background-color: #87CEEB;
@@ -67,7 +67,7 @@
             z-index: 10;
         }
 
-        #startBtn, #newGameBtn {
+        #startBtn, #newGameBtn, #submitScoreBtn {
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
@@ -83,6 +83,33 @@
         .end-screen p {
             margin-bottom: 20px;
             font-size: 20px;
+        }
+
+        .leaderboard {
+            width: 100%;
+            max-width: 400px;
+            background-color: #FFF;
+            border: 2px solid #000;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .leaderboard h2 {
+            margin: 0;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .leaderboard ol {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .leaderboard li {
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -106,7 +133,12 @@
         <div class="end-screen" id="endScreen" style="display: none;">
             <h1>Congratulations! You Won the Game!</h1>
             <p id="finalScore">Your Score: 0</p>
+            <button id="submitScoreBtn">Submit Score</button>
             <button id="newGameBtn">New Game</button>
+            <div class="leaderboard" id="leaderboard" style="display: none;">
+                <h2>Global Leaderboard</h2>
+                <ol id="leaderboardList"></ol>
+            </div>
         </div>
     </div>
 
@@ -146,8 +178,11 @@
         const startScreen = document.getElementById("startScreen");
         const startBtn = document.getElementById("startBtn");
         const endScreen = document.getElementById("endScreen");
+        const submitScoreBtn = document.getElementById("submitScoreBtn");
         const newGameBtn = document.getElementById("newGameBtn");
         const finalScore = document.getElementById("finalScore");
+        const leaderboard = document.getElementById("leaderboard");
+        const leaderboardList = document.getElementById("leaderboardList");
 
         document.getElementById('lives').textContent = `Lives: ${lives}`;
         document.getElementById('score').textContent = `Score: ${score}`;
@@ -243,18 +278,19 @@
                     character.x + character.width > obstacle.x &&
                     character.y < obstacle.y + obstacle.height &&
                     character.y + character.height > obstacle.y) {
-                    if (!powerUpActive || powerUpType !== 'invincibility') {
-                        lives--;
-                        document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    lives--;
+                    document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    if (lives <= 0) {
+                        alert('Game Over! Your score: ' + score);
+                        clearInterval(gameInterval);
                     }
-                    obstacle.x = canvas.width + Math.random() * 500;
                 }
             });
         }
 
         function drawGems() {
             gems.forEach(gem => {
-                ctx.fillStyle = '#00FF00';
+                ctx.fillStyle = '#FFFF00';
                 ctx.fillRect(gem.x, gem.y, gem.size, gem.size);
                 gem.x -= gem.speed;
 
@@ -270,9 +306,10 @@
                     document.getElementById('score').textContent = `Score: ${score}`;
                     gem.x = canvas.width + Math.random() * 500;
 
-                    // Win condition (e.g., collect 100 points)
+                    // Check for win condition
                     if (score >= 100) {
                         gameWon = true;
+                        showWinScreen();
                     }
                 }
             });
@@ -319,17 +356,43 @@
         function showWinScreen() {
             endScreen.style.display = "flex";
             finalScore.textContent = `Your Score: ${score}`;
+            leaderboard.style.display = "block";
+            updateLeaderboard();
         }
 
-        // Game loop
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawCharacter();
-            drawObstacles();
-            drawGems();
-            drawPowerUps();
-            jump();
+        // Update leaderboard display
+        function updateLeaderboard() {
+            const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
+            leaderboardScores.push(score);
+            leaderboardScores.sort((a, b) => b - a); // Sort scores in descending order
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
+
+            leaderboardList.innerHTML = '';
+            leaderboardScores.slice(0, 5).forEach((s, index) => {
+                const li = document.createElement('li');
+                li.textContent = `#${index + 1} - ${s}`;
+                leaderboardList.appendChild(li);
+            });
         }
+
+        // New game button event listener
+        newGameBtn.addEventListener("click", () => {
+            endScreen.style.display = "none";
+            initGame();
+        });
+
+        // Submit score event listener
+        submitScoreBtn.addEventListener("click", () => {
+            const name = prompt("Enter your name for the leaderboard:");
+            if (name) {
+                const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
+                leaderboardScores.push({ name, score });
+                leaderboardScores.sort((a, b) => b.score - a.score); // Sort scores in descending order
+                localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
+                updateLeaderboard();
+                alert("Score submitted!");
+            }
+        });
 
         // Initialize game
         function initGame() {
@@ -388,11 +451,15 @@
             initGame();
         });
 
-        // New game button event listener
-        newGameBtn.addEventListener("click", () => {
-            endScreen.style.display = "none";
-            initGame();
-        });
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCharacter();
+            drawObstacles();
+            drawGems();
+            drawPowerUps();
+            jump();
+        }
     </script>
 </body>
 </html>
