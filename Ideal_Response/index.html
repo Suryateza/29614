@@ -197,77 +197,57 @@
                     clearInterval(timerInterval);
                     clearInterval(gameInterval);
                     if (gameOver) {
-                        showGameOver();
+                        showGameOver(); // Call showGameOver when game ends
                     } else {
-                        alert(`Time's up! Your score: ${score}`);
-                        showGameOver();
+                        endGame();
                     }
                 }
             }, 1000);
         }
 
-        // Drawing the character
         function drawCharacter() {
-            ctx.fillStyle = '#FFD700';
+            ctx.fillStyle = '#FF0000'; // Character color
             ctx.fillRect(character.x, character.y, character.width, character.height);
         }
 
-        // Jump functionality with button press hold
         function jump() {
             if (isJumping) {
-                if (character.y > canvas.height - character.maxJumpHeight) {
-                    character.velocityY = -10;
+                character.velocityY -= 1; // Jumping force
+                character.y -= character.velocityY;
+                if (character.y <= character.maxJumpHeight) {
+                    character.isJumping = false; // Stop jumping at max height
                 }
-            } else {
-                character.velocityY += character.gravity;
-            }
-
-            character.y += character.velocityY;
-
-            if (character.y >= 550) {
-                character.y = 550;
-                character.velocityY = 0;
+            } else if (character.y < 550) {
+                character.velocityY += character.gravity; // Gravity effect
+                character.y += character.velocityY;
+                if (character.y >= 550) {
+                    character.y = 550; // Reset character to ground
+                    character.velocityY = 0;
+                }
             }
         }
 
-        // Handle slide action
-        function slide() {
-            if (!character.isJumping && !character.isSliding) {
-                character.isSliding = true;
-                character.height = 25;
-                setTimeout(() => {
-                    character.height = 50;
-                    character.isSliding = false;
-                }, 1000);
-            }
-        }
-
-        // Event listeners for button clicks
-        document.getElementById("jumpBtn").addEventListener("mousedown", () => {
-            isJumping = true;
-        });
-
-        document.getElementById("jumpBtn").addEventListener("mouseup", () => {
-            isJumping = false;
-        });
-
-        // Keyboard controls for jump (when holding the up arrow key)
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowUp") {
+        document.getElementById("jumpBtn").addEventListener("click", () => {
+            if (character.y === 550) {
+                character.isJumping = true;
                 isJumping = true;
             }
         });
 
-        document.addEventListener("keyup", (e) => {
-            if (e.key === "ArrowUp") {
-                isJumping = false;
+        document.getElementById("slideBtn").addEventListener("click", () => {
+            if (character.y === 550) {
+                character.isSliding = true;
+                character.height = 25; // Slide height
+                setTimeout(() => {
+                    character.isSliding = false;
+                    character.height = 50; // Reset height
+                }, 1000); // Slide duration
             }
         });
 
-        // Drawing obstacles, gems, and power-ups
         function drawObstacles() {
             obstacles.forEach(obstacle => {
-                ctx.fillStyle = '#FF0000';
+                ctx.fillStyle = '#FF0000'; // Obstacle color
                 ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 obstacle.x -= obstacle.speed;
 
@@ -275,7 +255,7 @@
                     obstacle.x = canvas.width + Math.random() * 500;
                 }
 
-                // Check for collision with character
+                // Check for collision with the character
                 if (character.x < obstacle.x + obstacle.width &&
                     character.x + character.width > obstacle.x &&
                     character.y < obstacle.y + obstacle.height &&
@@ -361,6 +341,14 @@
             updateLeaderboard();
         }
 
+        // Show game over screen with final score
+        function showGameOver() {
+            endScreen.style.display = "flex";
+            finalScore.textContent = `Your Score: ${score}`;
+            leaderboard.style.display = "block";
+            updateLeaderboard();
+        }
+
         // Update leaderboard display
         function updateLeaderboard() {
             const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
@@ -395,8 +383,7 @@
         // End game function
         function endGame() {
             alert("Game Over! Your score: " + score);
-            endScreen.style.display = "flex"; // Show end screen on game over
-            finalScore.textContent = `Your Score: ${score}`;
+            showGameOver(); // Call the showGameOver function here
             clearInterval(gameInterval);
             gameOver = true;
         }
