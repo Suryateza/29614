@@ -24,7 +24,7 @@
         }
         
         canvas {
-            background-color: #ADD8E6; /* Light blue background as a fallback */
+            background-color: #ADD8E6; /* Light blue background */
         }
         
         .controls {
@@ -64,6 +64,7 @@
             <div id="lives">Lives: 3</div>
             <div id="timer">Time: 60</div>
             <div id="score">Score: 0</div>
+            <div id="powerup">Power-Up: None</div>
         </div>
     </div>
     <script>
@@ -76,6 +77,10 @@
         let score = 0;
         let timer = 60;
         let gameInterval;
+        let powerUpActive = false;
+        let powerUpType = null;
+        let powerUpTimeLeft = 0;
+        
         let character = {
             x: 50,
             y: 550,
@@ -84,8 +89,10 @@
             isJumping: false,
             isSliding: false,
         };
+
         let obstacles = [];
-        let stars = [];
+        let gems = [];
+        let powerUps = [];
         
         document.getElementById('lives').textContent = `Lives: ${lives}`;
         document.getElementById('score').textContent = `Score: ${score}`;
@@ -147,7 +154,7 @@
                 }, 1000);
             }
         }
-        
+
         // Event listeners for button clicks
         document.getElementById("jumpBtn").addEventListener("click", () => jump(true));
         document.getElementById("slideBtn").addEventListener("click", slide);
@@ -168,7 +175,7 @@
             }
         });
         
-        // Drawing obstacles and stars
+        // Drawing obstacles, gems, and power-ups
         function drawObstacles() {
             obstacles.forEach(obstacle => {
                 ctx.fillStyle = '#FF0000';
@@ -184,44 +191,92 @@
                     character.x + character.width > obstacle.x &&
                     character.y < obstacle.y + obstacle.height &&
                     character.y + character.height > obstacle.y) {
-                    lives--;
-                    document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    if (!powerUpActive || powerUpType !== 'invincibility') {
+                        lives--;
+                        document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    }
                     obstacle.x = canvas.width + Math.random() * 500;
                 }
             });
         }
         
-        function drawStars() {
-            stars.forEach(star => {
-                ctx.fillStyle = '#FFFF00';
-                ctx.fillRect(star.x, star.y, star.size, star.size);
-                star.x -= star.speed;
+        function drawGems() {
+            gems.forEach(gem => {
+                ctx.fillStyle = '#00FF00'; // Gems are green
+                ctx.fillRect(gem.x, gem.y, gem.size, gem.size);
+                gem.x -= gem.speed;
 
-                if (star.x + star.size < 0) {
-                    star.x = canvas.width + Math.random() * 500;
+                if (gem.x + gem.size < 0) {
+                    gem.x = canvas.width + Math.random() * 500;
                 }
 
-                // Collect star
-                if (character.x < star.x + star.size &&
-                    character.x + character.width > star.x &&
-                    character.y < star.y + star.size &&
-                    character.y + character.height > star.y) {
+                // Collect gem
+                if (character.x < gem.x + gem.size &&
+                    character.x + character.width > gem.x &&
+                    character.y < gem.y + gem.size &&
+                    character.y + character.height > gem.y) {
                     score += 10;
                     document.getElementById('score').textContent = `Score: ${score}`;
-                    star.x = canvas.width + Math.random() * 500;
+                    gem.x = canvas.width + Math.random() * 500;
                 }
             });
         }
-        
+
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                ctx.fillStyle = '#FFD700'; // Power-up is golden
+                ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
+                powerUp.x -= powerUp.speed;
+
+                if (powerUp.x + powerUp.size < 0) {
+                    powerUp.x = canvas.width + Math.random() * 500;
+                }
+
+                // Collect power-up
+                if (character.x < powerUp.x + powerUp.size &&
+                    character.x + character.width > powerUp.x &&
+                    character.y < powerUp.y + powerUp.size &&
+                    character.y + character.height > powerUp.y) {
+                    activatePowerUp(powerUp.type);
+                    powerUp.x = canvas.width + Math.random() * 500;
+                }
+            });
+        }
+
+        function activatePowerUp(type) {
+            powerUpActive = true;
+            powerUpType = type;
+            powerUpTimeLeft = 10; // Power-up lasts for 10 seconds
+            document.getElementById('powerup').textContent = `Power-Up: ${type}`;
+            
+            if (type === 'invincibility') {
+                // Make the character invincible
+            } else if (type === 'extraLife') {
+                lives++;
+                document.getElementById('lives').textContent = `Lives: ${lives}`;
+            }
+
+            const powerUpInterval = setInterval(() => {
+                powerUpTimeLeft--;
+                if (powerUpTimeLeft <= 0) {
+                    powerUpActive = false;
+                    document.getElementById('powerup').textContent = `Power-Up: None`;
+                    clearInterval(powerUpInterval);
+                }
+            }, 1000);
+        }
+
         // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawCharacter();
             drawObstacles();
-            drawStars();
+            drawGems();
+            drawPowerUps();
         }
         
         function initGame() {
+            // Create obstacles
             for (let i = 0; i < 3; i++) {
                 obstacles.push({
                     x: canvas.width + Math.random() * 500,
@@ -232,12 +287,24 @@
                 });
             }
 
+            // Create gems
             for (let i = 0; i < 5; i++) {
-                stars.push({
+                gems.push({
                     x: canvas.width + Math.random() * 500,
                     y: Math.random() * 500,
                     size: 25,
                     speed: 3
+                });
+            }
+
+            // Create power-ups
+            for (let i = 0; i < 2; i++) {
+                powerUps.push({
+                    x: canvas.width + Math.random() * 500,
+                    y: Math.random() * 500,
+                    size: 30,
+                    speed: 2,
+                    type: Math.random() > 0.5 ? 'invincibility' : 'extraLife'
                 });
             }
 
