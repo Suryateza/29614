@@ -52,7 +52,7 @@
             border-radius: 5px;
         }
         
-        .start-screen {
+        .start-screen, .end-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -67,13 +67,22 @@
             z-index: 10;
         }
 
-        #startBtn {
+        #startBtn, #newGameBtn {
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
             background-color: #FFD700;
             border: 2px solid #000;
             border-radius: 10px;
+        }
+
+        .end-screen h1 {
+            margin-bottom: 20px;
+        }
+
+        .end-screen p {
+            margin-bottom: 20px;
+            font-size: 20px;
         }
     </style>
 </head>
@@ -94,6 +103,11 @@
             <h1>Welcome to the Game!</h1>
             <button id="startBtn">Start Game</button>
         </div>
+        <div class="end-screen" id="endScreen" style="display: none;">
+            <h1>Congratulations! You Won the Game!</h1>
+            <p id="finalScore">Your Score: 0</p>
+            <button id="newGameBtn">New Game</button>
+        </div>
     </div>
 
     <script>
@@ -109,6 +123,7 @@
         let powerUpActive = false;
         let powerUpType = null;
         let powerUpTimeLeft = 0;
+        let gameWon = false;
 
         let character = {
             x: 50,
@@ -130,6 +145,9 @@
 
         const startScreen = document.getElementById("startScreen");
         const startBtn = document.getElementById("startBtn");
+        const endScreen = document.getElementById("endScreen");
+        const newGameBtn = document.getElementById("newGameBtn");
+        const finalScore = document.getElementById("finalScore");
 
         document.getElementById('lives').textContent = `Lives: ${lives}`;
         document.getElementById('score').textContent = `Score: ${score}`;
@@ -140,10 +158,14 @@
             const timerInterval = setInterval(() => {
                 timer--;
                 document.getElementById('timer').textContent = `Time: ${timer}`;
-                if (timer <= 0 || lives <= 0) {
+                if (timer <= 0 || lives <= 0 || gameWon) {
                     clearInterval(timerInterval);
                     clearInterval(gameInterval);
-                    alert(`Game Over! Your score: ${score}`);
+                    if (gameWon) {
+                        showWinScreen();
+                    } else {
+                        alert(`Game Over! Your score: ${score}`);
+                    }
                 }
             }, 1000);
         }
@@ -247,13 +269,18 @@
                     score += 10;
                     document.getElementById('score').textContent = `Score: ${score}`;
                     gem.x = canvas.width + Math.random() * 500;
+
+                    // Win condition (e.g., collect 100 points)
+                    if (score >= 100) {
+                        gameWon = true;
+                    }
                 }
             });
         }
 
         function drawPowerUps() {
             powerUps.forEach(powerUp => {
-                ctx.fillStyle = '#FFD700';
+                ctx.fillStyle = '#0000FF';
                 ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
                 powerUp.x -= powerUp.speed;
 
@@ -265,33 +292,33 @@
                     character.x + character.width > powerUp.x &&
                     character.y < powerUp.y + powerUp.size &&
                     character.y + character.height > powerUp.y) {
-                    activatePowerUp(powerUp.type);
+                    powerUpActive = true;
+                    powerUpType = powerUp.type;
+                    powerUpTimeLeft = 10;
+                    document.getElementById('powerup').textContent = `Power-Up: ${powerUpType}`;
                     powerUp.x = canvas.width + Math.random() * 500;
+
+                    if (powerUpType === 'extraLife') {
+                        lives++;
+                        document.getElementById('lives').textContent = `Lives: ${lives}`;
+                    }
+
+                    const powerUpInterval = setInterval(() => {
+                        powerUpTimeLeft--;
+                        if (powerUpTimeLeft <= 0) {
+                            powerUpActive = false;
+                            document.getElementById('powerup').textContent = `Power-Up: None`;
+                            clearInterval(powerUpInterval);
+                        }
+                    }, 1000);
                 }
             });
         }
 
-        function activatePowerUp(type) {
-            powerUpActive = true;
-            powerUpType = type;
-            powerUpTimeLeft = 10;
-            document.getElementById('powerup').textContent = `Power-Up: ${type}`;
-
-            if (type === 'invincibility') {
-                // Invincible character logic here
-            } else if (type === 'extraLife') {
-                lives++;
-                document.getElementById('lives').textContent = `Lives: ${lives}`;
-            }
-
-            const powerUpInterval = setInterval(() => {
-                powerUpTimeLeft--;
-                if (powerUpTimeLeft <= 0) {
-                    powerUpActive = false;
-                    document.getElementById('powerup').textContent = `Power-Up: None`;
-                    clearInterval(powerUpInterval);
-                }
-            }, 1000);
+        // Show win screen with final score
+        function showWinScreen() {
+            endScreen.style.display = "flex";
+            finalScore.textContent = `Your Score: ${score}`;
         }
 
         // Game loop
@@ -304,7 +331,19 @@
             jump();
         }
 
+        // Initialize game
         function initGame() {
+            obstacles = [];
+            gems = [];
+            powerUps = [];
+            lives = 3;
+            score = 0;
+            timer = 60;
+            gameWon = false;
+            document.getElementById('lives').textContent = `Lives: ${lives}`;
+            document.getElementById('score').textContent = `Score: ${score}`;
+            document.getElementById('timer').textContent = `Time: ${timer}`;
+
             // Create obstacles
             for (let i = 0; i < 3; i++) {
                 obstacles.push({
@@ -346,6 +385,12 @@
             startScreen.style.display = "none";
             document.getElementById("jumpBtn").disabled = false;
             document.getElementById("slideBtn").disabled = false;
+            initGame();
+        });
+
+        // New game button event listener
+        newGameBtn.addEventListener("click", () => {
+            endScreen.style.display = "none";
             initGame();
         });
     </script>
