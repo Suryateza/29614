@@ -363,14 +363,14 @@
         // Update leaderboard display
         function updateLeaderboard() {
             const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboardScores.push(score);
-            leaderboardScores.sort((a, b) => b - a); // Sort scores in descending order
+            leaderboardScores.push({ name: 'Player', score }); // Temporary placeholder for player name
+            leaderboardScores.sort((a, b) => b.score - a.score); // Sort scores in descending order
             localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
 
             leaderboardList.innerHTML = '';
-            leaderboardScores.slice(0, 5).forEach((s, index) => {
+            leaderboardScores.slice(0, 5).forEach((entry, index) => {
                 const li = document.createElement('li');
-                li.textContent = `#${index + 1} - ${s}`;
+                li.textContent = `#${index + 1} - ${entry.name}: ${entry.score}`;
                 leaderboardList.appendChild(li);
             });
         }
