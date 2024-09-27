@@ -1,466 +1,469 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartoon Game with Leaderboard</title>
-    <style>
-        body {
-            background-color: #87CEEB;
-            font-family: 'Comic Sans MS', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        
-        .game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            background-color: #FFF;
-            border: 2px solid #000;
-        }
-        
-        canvas {
-            background-color: #ADD8E6;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        
-        button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #FFF;
-            font-size: 20px;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        
-        .start-screen, .end-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartoon Game with Leaderboard</title>
+  <style>
+    body {
+      background-color: #87CEEB;
+      font-family: 'Comic Sans MS', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-        #startBtn, #newGameBtn, #submitScoreBtn {
-            padding: 15px 30px;
-            font-size: 24px;
-            cursor: pointer;
-            background-color: #FFD700;
-            border: 2px solid #000;
-            border-radius: 10px;
-        }
+    .game-container {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      background-color: #FFF;
+      border: 2px solid #000;
+    }
 
-        .end-screen h1 {
-            margin-bottom: 20px;
-        }
+    canvas {
+      background-color: #ADD8E6;
+    }
 
-        .end-screen p {
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
 
-        .leaderboard {
-            width: 100%;
-            max-width: 400px;
-            background-color: #f36464;
-            border: 2px solid #000;
-            padding: 10px;
-            color: #000;
-            margin-top: 10px;
-        }
+    button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
 
-        .leaderboard h2 {
-            margin: 0;
-            font-size: 24px;
-            text-align: center;
-        }
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #FFF;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
 
-        .leaderboard ol {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
-        }
+    .start-screen,
+    .end-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
 
-        .leaderboard li {
-            font-size: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-    </style>
+    #startBtn,
+    #newGameBtn,
+    #submitScoreBtn {
+      padding: 15px 30px;
+      font-size: 24px;
+      cursor: pointer;
+      background-color: #FFD700;
+      border: 2px solid #000;
+      border-radius: 10px;
+    }
+
+    .end-screen h1 {
+      margin-bottom: 20px;
+    }
+
+    .end-screen p {
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    .leaderboard {
+      width: 100%;
+      max-width: 400px;
+      background-color: #f36464;
+      border: 2px solid #000;
+      padding: 10px;
+      color: #000;
+      margin-top: 10px;
+    }
+
+    .leaderboard h2 {
+      margin: 0;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .leaderboard ol {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+    }
+
+    .leaderboard li {
+      font-size: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="game-container">
-        <canvas id="gameCanvas"></canvas>
-        <div class="controls">
-            <button id="jumpBtn" disabled>Jump</button>
-            <button id="slideBtn" disabled>Slide</button>
-        </div>
-        <div class="info-panel">
-            <div id="lives">Lives: 3</div>
-            <div id="timer">Time: 60</div>
-            <div id="score">Score: 0</div>
-            <div id="powerup">Power-Up: None</div>
-        </div>
-        <div class="start-screen" id="startScreen">
-            <h1>Welcome to the Game!</h1>
-            <button id="startBtn">Start Game</button>
-        </div>
-        <div class="end-screen" id="endScreen" style="display: none;">
-            <h1>Congratulations! You Won the Game!</h1>
-            <p id="finalScore">Your Score: 0</p>
-            <button id="submitScoreBtn">Submit Score</button>
-            <button id="newGameBtn">New Game</button>
-            <div class="leaderboard" id="leaderboard" style="display: none;">
-                <h2>Global Leaderboard</h2>
-                <ol id="leaderboardList"></ol>
-            </div>
-        </div>
+  <div class="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="controls">
+      <button id="jumpBtn" disabled>Jump</button>
+      <button id="slideBtn" disabled>Slide</button>
     </div>
+    <div class="info-panel">
+      <div id="lives">Lives: 3</div>
+      <div id="timer">Time: 60</div>
+      <div id="score">Score: 0</div>
+      <div id="powerup">Power-Up: None</div>
+    </div>
+    <div class="start-screen" id="startScreen">
+      <h1>Welcome to the Game!</h1>
+      <button id="startBtn">Start Game</button>
+    </div>
+    <div class="end-screen" id="endScreen" style="display: none;">
+      <h1>Congratulations! You Won the Game!</h1>
+      <p id="finalScore">Your Score: 0</p>
+      <button id="submitScoreBtn">Submit Score</button>
+      <button id="newGameBtn">New Game</button>
+      <div class="leaderboard" id="leaderboard" style="display: none;">
+        <h2>Global Leaderboard</h2>
+        <ol id="leaderboardList"></ol>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = 800;
-        canvas.height = 600;
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 800;
+    canvas.height = 600;
 
-        let lives = 3;
-        let score = 0;
-        let timer = 60;
-        let gameInterval;
-        let powerUpActive = false;
-        let powerUpType = null;
-        let powerUpTimeLeft = 0;
-        let gameWon = false;
+    let lives = 3;
+    let score = 0;
+    let timer = 60;
+    let gameInterval;
+    let powerUpActive = false;
+    let powerUpType = null;
+    let powerUpTimeLeft = 0;
+    let gameWon = false;
 
-        let character = {
-            x: 50,
-            y: 550,
-            width: 50,
-            height: 50,
-            isJumping: false,
-            isSliding: false,
-            velocityY: 0,
-            maxJumpHeight: 300,
-            gravity: 1,
-        };
+    let character = {
+      x: 50,
+      y: 550,
+      width: 50,
+      height: 50,
+      isJumping: false,
+      isSliding: false,
+      velocityY: 0,
+      maxJumpHeight: 300,
+      gravity: 1,
+    };
 
-        let isJumping = false;
+    let isJumping = false;
 
-        let obstacles = [];
-        let gems = [];
-        let powerUps = [];
+    let obstacles = [];
+    let gems = [];
+    let powerUps = [];
 
-        const startScreen = document.getElementById("startScreen");
-        const startBtn = document.getElementById("startBtn");
-        const endScreen = document.getElementById("endScreen");
-        const submitScoreBtn = document.getElementById("submitScoreBtn");
-        const newGameBtn = document.getElementById("newGameBtn");
-        const finalScore = document.getElementById("finalScore");
-        const leaderboard = document.getElementById("leaderboard");
-        const leaderboardList = document.getElementById("leaderboardList");
+    const startScreen = document.getElementById("startScreen");
+    const startBtn = document.getElementById("startBtn");
+    const endScreen = document.getElementById("endScreen");
+    const submitScoreBtn = document.getElementById("submitScoreBtn");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const finalScore = document.getElementById("finalScore");
+    const leaderboard = document.getElementById("leaderboard");
+    const leaderboardList = document.getElementById("leaderboardList");
 
-        document.getElementById('lives').textContent = `Lives: ${lives}`;
-        document.getElementById('score').textContent = `Score: ${score}`;
+    document.getElementById('lives').textContent = `Lives: ${lives}`;
+    document.getElementById('score').textContent = `Score: ${score}`;
+    document.getElementById('timer').textContent = `Time: ${timer}`;
+
+    // Timer countdown
+    function startTimer() {
+      const timerInterval = setInterval(() => {
+        timer--;
         document.getElementById('timer').textContent = `Time: ${timer}`;
+        if (timer <= 0 || lives <= 0 || gameWon) {
+          clearInterval(timerInterval);
+          clearInterval(gameInterval);
+          if (gameWon) {
+            showWinScreen();
+          } else {
+            alert(`Game Over! Your score: ${score}`);
+          }
+        }
+      }, 1000);
+    }
 
-        // Timer countdown
-        function startTimer() {
-            const timerInterval = setInterval(() => {
-                timer--;
-                document.getElementById('timer').textContent = `Time: ${timer}`;
-                if (timer <= 0 || lives <= 0 || gameWon) {
-                    clearInterval(timerInterval);
-                    clearInterval(gameInterval);
-                    if (gameWon) {
-                        showWinScreen();
-                    } else {
-                        alert(`Game Over! Your score: ${score}`);
-                    }
-                }
-            }, 1000);
+    // Drawing the character
+    function drawCharacter() {
+      ctx.fillStyle = '#FFD700';
+      ctx.fillRect(character.x, character.y, character.width, character.height);
+    }
+
+    // Jump functionality with button press hold
+    function jump() {
+      if (isJumping) {
+        if (character.y > canvas.height - character.maxJumpHeight) {
+          character.velocityY = -10;
+        }
+      } else {
+        character.velocityY += character.gravity;
+      }
+
+      character.y += character.velocityY;
+
+      if (character.y >= 550) {
+        character.y = 550;
+        character.velocityY = 0;
+      }
+    }
+
+    // Handle slide action
+    function slide() {
+      if (!character.isJumping && !character.isSliding) {
+        character.isSliding = true;
+        character.height = 25;
+        setTimeout(() => {
+          character.height = 50;
+          character.isSliding = false;
+        }, 1000);
+      }
+    }
+
+    // Event listeners for button clicks
+    document.getElementById("jumpBtn").addEventListener("mousedown", () => {
+      isJumping = true;
+    });
+
+    document.getElementById("jumpBtn").addEventListener("mouseup", () => {
+      isJumping = false;
+    });
+
+    // Keyboard controls for jump (when holding the up arrow key)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
+        isJumping = true;
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowUp") {
+        isJumping = false;
+      }
+    });
+
+    // Drawing obstacles, gems, and power-ups
+    function drawObstacles() {
+      obstacles.forEach(obstacle => {
+        ctx.fillStyle = '#FF0000';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        obstacle.x -= obstacle.speed;
+
+        if (obstacle.x + obstacle.width < 0) {
+          obstacle.x = canvas.width + Math.random() * 500;
         }
 
-        // Drawing the character
-        function drawCharacter() {
-            ctx.fillStyle = '#FFD700';
-            ctx.fillRect(character.x, character.y, character.width, character.height);
+        if (character.x < obstacle.x + obstacle.width &&
+          character.x + character.width > obstacle.x &&
+          character.y < obstacle.y + obstacle.height &&
+          character.y + character.height > obstacle.y) {
+          lives--;
+          document.getElementById('lives').textContent = `Lives: ${lives}`;
+          if (lives <= 0) {
+            alert('Game Over! Your score: ' + score);
+            clearInterval(gameInterval);
+          }
+        }
+      });
+    }
+
+    function drawGems() {
+      gems.forEach(gem => {
+        ctx.fillStyle = '#FFFF00';
+        ctx.fillRect(gem.x, gem.y, gem.size, gem.size);
+        gem.x -= gem.speed;
+
+        if (gem.x + gem.size < 0) {
+          gem.x = canvas.width + Math.random() * 500;
         }
 
-        // Jump functionality with button press hold
-        function jump() {
-            if (isJumping) {
-                if (character.y > canvas.height - character.maxJumpHeight) {
-                    character.velocityY = -10;
-                }
-            } else {
-                character.velocityY += character.gravity;
-            }
+        if (character.x < gem.x + gem.size &&
+          character.x + character.width > gem.x &&
+          character.y < gem.y + gem.size &&
+          character.y + character.height > gem.y) {
+          score += 10;
+          document.getElementById('score').textContent = `Score: ${score}`;
+          gem.x = canvas.width + Math.random() * 500;
 
-            character.y += character.velocityY;
+          // Check for win condition
+          if (score >= 100) {
+            gameWon = true;
+            showWinScreen();
+          }
+        }
+      });
+    }
 
-            if (character.y >= 550) {
-                character.y = 550;
-                character.velocityY = 0;
-            }
+    function drawPowerUps() {
+      powerUps.forEach(powerUp => {
+        ctx.fillStyle = '#0000FF';
+        ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
+        powerUp.x -= powerUp.speed;
+
+        if (powerUp.x + powerUp.size < 0) {
+          powerUp.x = canvas.width + Math.random() * 500;
         }
 
-        // Handle slide action
-        function slide() {
-            if (!character.isJumping && !character.isSliding) {
-                character.isSliding = true;
-                character.height = 25;
-                setTimeout(() => {
-                    character.height = 50;
-                    character.isSliding = false;
-                }, 1000);
-            }
-        }
+        if (character.x < powerUp.x + powerUp.size &&
+          character.x + character.width > powerUp.x &&
+          character.y < powerUp.y + powerUp.size &&
+          character.y + character.height > powerUp.y) {
+          powerUpActive = true;
+          powerUpType = powerUp.type;
+          powerUpTimeLeft = 10;
+          document.getElementById('powerup').textContent = `Power-Up: ${powerUpType}`;
+          powerUp.x = canvas.width + Math.random() * 500;
 
-        // Event listeners for button clicks
-        document.getElementById("jumpBtn").addEventListener("mousedown", () => {
-            isJumping = true;
-        });
-
-        document.getElementById("jumpBtn").addEventListener("mouseup", () => {
-            isJumping = false;
-        });
-
-        // Keyboard controls for jump (when holding the up arrow key)
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowUp") {
-                isJumping = true;
-            }
-        });
-
-        document.addEventListener("keyup", (e) => {
-            if (e.key === "ArrowUp") {
-                isJumping = false;
-            }
-        });
-
-        // Drawing obstacles, gems, and power-ups
-        function drawObstacles() {
-            obstacles.forEach(obstacle => {
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                obstacle.x -= obstacle.speed;
-
-                if (obstacle.x + obstacle.width < 0) {
-                    obstacle.x = canvas.width + Math.random() * 500;
-                }
-
-                if (character.x < obstacle.x + obstacle.width &&
-                    character.x + character.width > obstacle.x &&
-                    character.y < obstacle.y + obstacle.height &&
-                    character.y + character.height > obstacle.y) {
-                    lives--;
-                    document.getElementById('lives').textContent = `Lives: ${lives}`;
-                    if (lives <= 0) {
-                        alert('Game Over! Your score: ' + score);
-                        clearInterval(gameInterval);
-                    }
-                }
-            });
-        }
-
-        function drawGems() {
-            gems.forEach(gem => {
-                ctx.fillStyle = '#FFFF00';
-                ctx.fillRect(gem.x, gem.y, gem.size, gem.size);
-                gem.x -= gem.speed;
-
-                if (gem.x + gem.size < 0) {
-                    gem.x = canvas.width + Math.random() * 500;
-                }
-
-                if (character.x < gem.x + gem.size &&
-                    character.x + character.width > gem.x &&
-                    character.y < gem.y + gem.size &&
-                    character.y + character.height > gem.y) {
-                    score += 10;
-                    document.getElementById('score').textContent = `Score: ${score}`;
-                    gem.x = canvas.width + Math.random() * 500;
-
-                    // Check for win condition
-                    if (score >= 100) {
-                        gameWon = true;
-                        showWinScreen();
-                    }
-                }
-            });
-        }
-
-        function drawPowerUps() {
-            powerUps.forEach(powerUp => {
-                ctx.fillStyle = '#0000FF';
-                ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
-                powerUp.x -= powerUp.speed;
-
-                if (powerUp.x + powerUp.size < 0) {
-                    powerUp.x = canvas.width + Math.random() * 500;
-                }
-
-                if (character.x < powerUp.x + powerUp.size &&
-                    character.x + character.width > powerUp.x &&
-                    character.y < powerUp.y + powerUp.size &&
-                    character.y + character.height > powerUp.y) {
-                    powerUpActive = true;
-                    powerUpType = powerUp.type;
-                    powerUpTimeLeft = 10;
-                    document.getElementById('powerup').textContent = `Power-Up: ${powerUpType}`;
-                    powerUp.x = canvas.width + Math.random() * 500;
-
-                    if (powerUpType === 'extraLife') {
-                        lives++;
-                        document.getElementById('lives').textContent = `Lives: ${lives}`;
-                    }
-
-                    const powerUpInterval = setInterval(() => {
-                        powerUpTimeLeft--;
-                        if (powerUpTimeLeft <= 0) {
-                            powerUpActive = false;
-                            document.getElementById('powerup').textContent = `Power-Up: None`;
-                            clearInterval(powerUpInterval);
-                        }
-                    }, 1000);
-                }
-            });
-        }
-
-        // Show win screen with final score
-        function showWinScreen() {
-            endScreen.style.display = "flex";
-            finalScore.textContent = `Your Score: ${score}`;
-            leaderboard.style.display = "block";
-            updateLeaderboard();
-        }
-
-        // Update leaderboard display
-        function updateLeaderboard() {
-            const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboardScores.push(score);
-            leaderboardScores.sort((a, b) => b - a); // Sort scores in descending order
-            localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
-
-            leaderboardList.innerHTML = '';
-            leaderboardScores.slice(0, 5).forEach((s, index) => {
-                const li = document.createElement('li');
-                li.textContent = `#${index + 1} - ${s}`;
-                leaderboardList.appendChild(li);
-            });
-        }
-
-        // New game button event listener
-        newGameBtn.addEventListener("click", () => {
-            endScreen.style.display = "none";
-            initGame();
-        });
-
-        // Submit score event listener
-        submitScoreBtn.addEventListener("click", () => {
-            const name = prompt("Enter your name for the leaderboard:");
-            if (name) {
-                const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
-                leaderboardScores.push({ name, score });
-                leaderboardScores.sort((a, b) => b.score - a.score); // Sort scores in descending order
-                localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Store top 5 scores
-                updateLeaderboard();
-                alert("Score submitted!");
-            }
-        });
-
-        // Initialize game
-        function initGame() {
-            obstacles = [];
-            gems = [];
-            powerUps = [];
-            lives = 3;
-            score = 0;
-            timer = 60;
-            gameWon = false;
+          if (powerUpType === 'extraLife') {
+            lives++;
             document.getElementById('lives').textContent = `Lives: ${lives}`;
-            document.getElementById('score').textContent = `Score: ${score}`;
-            document.getElementById('timer').textContent = `Time: ${timer}`;
+          }
 
-            // Create obstacles
-            for (let i = 0; i < 3; i++) {
-                obstacles.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: 550,
-                    width: 50,
-                    height: 50,
-                    speed: 5
-                });
+          const powerUpInterval = setInterval(() => {
+            powerUpTimeLeft--;
+            if (powerUpTimeLeft <= 0) {
+              powerUpActive = false;
+              document.getElementById('powerup').textContent = `Power-Up: None`;
+              clearInterval(powerUpInterval);
             }
-
-            // Create gems
-            for (let i = 0; i < 5; i++) {
-                gems.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: Math.random() * 500,
-                    size: 25,
-                    speed: 3
-                });
-            }
-
-            // Create power-ups
-            for (let i = 0; i < 2; i++) {
-                powerUps.push({
-                    x: canvas.width + Math.random() * 500,
-                    y: Math.random() * 500,
-                    size: 30,
-                    speed: 2,
-                    type: Math.random() > 0.5 ? 'invincibility' : 'extraLife'
-                });
-            }
-
-            gameInterval = setInterval(gameLoop, 1000 / 60);
-            startTimer();
+          }, 1000);
         }
+      });
+    }
 
-        // Start button event listener
-        startBtn.addEventListener("click", () => {
-            startScreen.style.display = "none";
-            document.getElementById("jumpBtn").disabled = false;
-            document.getElementById("slideBtn").disabled = false;
-            initGame();
+    // Show win screen with final score
+    function showWinScreen() {
+      endScreen.style.display = "flex";
+      finalScore.textContent = `Your Score: ${score}`;
+      leaderboard.style.display = "block";
+      updateLeaderboard();
+    }
+
+    // Update leaderboard display
+    function updateLeaderboard() {
+      const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+      leaderboardList.innerHTML = ''; // Clear current leaderboard display
+      leaderboardScores.slice(0, 5).forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.textContent = `#${index + 1} - ${entry.name}: ${entry.score}`; // Display name and score
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    // New game button event listener
+    newGameBtn.addEventListener("click", () => {
+      endScreen.style.display = "none";
+      initGame();
+    });
+
+    // Submit score event listener
+    submitScoreBtn.addEventListener("click", () => {
+      const name = prompt("Enter your name for the leaderboard:");
+      if (name) {
+        const leaderboardScores = JSON.parse(localStorage.getItem("leaderboard")) || [];
+        leaderboardScores.push({ name, score }); // Store both name and score
+        leaderboardScores.sort((a, b) => b.score - a.score); // Sort by score in descending order
+        localStorage.setItem("leaderboard", JSON.stringify(leaderboardScores.slice(0, 5))); // Keep top 5 scores
+
+        updateLeaderboard(); // Refresh leaderboard display
+      }
+    });
+
+    // Initialize game
+    function initGame() {
+      obstacles = [];
+      gems = [];
+      powerUps = [];
+      lives = 3;
+      score = 0;
+      timer = 60;
+      gameWon = false;
+      document.getElementById('lives').textContent = `Lives: ${lives}`;
+      document.getElementById('score').textContent = `Score: ${score}`;
+      document.getElementById('timer').textContent = `Time: ${timer}`;
+
+      // Create obstacles
+      for (let i = 0; i < 3; i++) {
+        obstacles.push({
+          x: canvas.width + Math.random() * 500,
+          y: 550,
+          width: 50,
+          height: 50,
+          speed: 5
         });
+      }
 
-        // Game loop
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawCharacter();
-            drawObstacles();
-            drawGems();
-            drawPowerUps();
-            jump();
-        }
-    </script>
+      // Create gems
+      for (let i = 0; i < 5; i++) {
+        gems.push({
+          x: canvas.width + Math.random() * 500,
+          y: Math.random() * 500,
+          size: 25,
+          speed: 3
+        });
+      }
+
+      // Create power-ups
+      for (let i = 0; i < 2; i++) {
+        powerUps.push({
+          x: canvas.width + Math.random() * 500,
+          y: Math.random() * 500,
+          size: 30,
+          speed: 2,
+          type: Math.random() > 0.5 ? 'invincibility' : 'extraLife'
+        });
+      }
+
+      gameInterval = setInterval(gameLoop, 1000 / 60);
+      startTimer();
+    }
+
+    // Start button event listener
+    startBtn.addEventListener("click", () => {
+      startScreen.style.display = "none";
+      document.getElementById("jumpBtn").disabled = false;
+      document.getElementById("slideBtn").disabled = false;
+      initGame();
+    });
+
+    // Game loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCharacter();
+      drawObstacles();
+      drawGems();
+      drawPowerUps();
+      jump();
+    }
+  </script>
 </body>
+
 </html>
